@@ -10,7 +10,7 @@
         "https://chat.openai.com/c/*",
         "https://chatgpt.com/c/*"
       ],
-      "js": ["content.js"]
+      "js": ["turndown.min.js", "content.js"]
     }
   ],
   "icons": {
