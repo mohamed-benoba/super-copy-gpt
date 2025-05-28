@@ -1,6 +1,10 @@
 // 🔍 Find all "Copy" buttons
 function getCopyButtons() {
-  return document.querySelectorAll('button[aria-label="Copy"]');
+  const buttons = document.querySelectorAll('button[aria-label="Copy"]');
+  return Array.from(buttons).filter(button => {
+    const parent = button.parentElement;
+    return parent && parent.querySelector('[data-testid="good-response-turn-action-button"]');
+  });
 }
 
 // ✅ Check if SuperCopy was already added
@@ -113,17 +117,17 @@ function createMenuForDefault(parent, anchorButton, onSelect) {
 
   const options = [
     {
+      text: "Copy clean text (Recommended)",
+      transformations: [removeFramingText, removeAllHRs]
+    },
+    {
       text: "Copy as is",
       transformations: []
     },
     {
-      text: "Copy without framing text",
+      text: "Copy without intro/outro",
       transformations: [removeFramingText]
-    },
-    {
-      text: "Copy without framing and HR tags",
-      transformations: [removeFramingText, removeAllHRs]
-    },
+    }, 
     {
       text: "Copy plain text (no markdown)",
       transformations: [removeMarkdownFormatting]
@@ -359,21 +363,21 @@ function addSuperCopyButton(copyButton) {
   markAsInjected(copyButton);
 
   // Hide the original copy button
-  // copyButton.style.display = "none";
+  copyButton.style.display = "none";
 
   const options = [
+    {
+      text: "Copy clean text (Recommended)",
+      transformations: [removeFramingText, removeAllHRs]
+    },
     {
       text: "Copy as is",
       transformations: []
     },
     {
-      text: "Copy without framing text",
+      text: "Copy without intro/outro",
       transformations: [removeFramingText]
-    },
-    {
-      text: "Copy without framing and HR tags",
-      transformations: [removeFramingText, removeAllHRs]
-    },
+    }, 
     {
       text: "Copy plain text (no markdown)",
       transformations: [removeMarkdownFormatting]

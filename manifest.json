@@ -1,13 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "Super Copy GPT",
+  "name": "SuperCopy for ChatGPT",
   "version": "1.0",
   "description": "Duplicates the copy button on ChatGPT pages",
   "permissions": ["activeTab"],
   "content_scripts": [
     {
       "matches": [
-        "https://chat.openai.com/c/*",
+        "https://chat.openai.com/*",
         "https://chatgpt.com/*"
       ],
       "js": ["turndown.min.js", "content.js"]
