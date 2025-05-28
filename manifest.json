@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "SuperCopy for ChatGPT",
   "version": "1.0",
-  "description": "Duplicates the copy button on ChatGPT pages",
+  "description": "Make the copy button on ChatGPT better with more control, clean up the markdown, remove intro/outro AI response etc.",
   "permissions": ["activeTab"],
   "content_scripts": [
     {
