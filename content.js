@@ -313,11 +313,33 @@ function extractMarkdownText(markdownDiv, transformations = []) {
       }
     });
 
+    // Configure turndown to handle lists properly
+    turndownService.addRule('lists', {
+      filter: ['ul', 'ol'],
+      replacement: function(content, node) {
+        const listItems = Array.from(node.querySelectorAll('li'));
+        const isOrdered = node.tagName.toLowerCase() === 'ol';
+        
+        let markdown = '';
+        listItems.forEach((item, index) => {
+          const prefix = isOrdered ? `${index + 1}. ` : '- ';
+          const text = item.textContent.trim();
+          markdown += `${prefix}${text}\n`;
+        });
+        
+        return markdown;
+      }
+    });
+
     // Convert HTML to Markdown
     let markdown = turndownService.turndown(transformedDiv.innerHTML);
     
-    // Clean up any extra newlines
-    markdown = markdown.replace(/\n{3,}/g, '\n\n').trim();
+    // Clean up any extra newlines and spaces
+    markdown = markdown
+      .replace(/\n{3,}/g, '\n\n')  // Replace 3 or more newlines with 2
+      .replace(/\n\s*\n\s*[-*+]\s/g, '\n- ')  // Fix spacing before bullet points
+      .replace(/\n\s*\n\s*\d+\.\s/g, '\n1. ')  // Fix spacing before numbered lists
+      .trim();
     
     return markdown;
   } catch (error) {
