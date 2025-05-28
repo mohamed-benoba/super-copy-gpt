@@ -18,8 +18,8 @@ function createSuperCopySplitButton(onCopy, onMenu) {
   const container = document.createElement("div");
   container.style.display = "inline-flex";
   container.style.alignItems = "center";
-  container.style.marginLeft = "8px";
   container.style.position = "relative";
+  container.style.padding = "2px 0";
 
   // Main icon button (refresh/sync SVG)
   const iconButton = document.createElement("button");
@@ -30,20 +30,39 @@ function createSuperCopySplitButton(onCopy, onMenu) {
   iconButton.style.display = "flex";
   iconButton.style.alignItems = "center";
   iconButton.style.padding = "4px";
-  iconButton.innerHTML = `
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M10 2V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <path d="M10 16V18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <path d="M4.22 4.22L5.64 5.64" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <path d="M14.36 14.36L15.78 15.78" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <path d="M2 10H4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <path d="M16 10H18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <path d="M4.22 15.78L5.64 14.36" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <path d="M14.36 5.64L15.78 4.22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/>
+  iconButton.style.width = "24px";
+  iconButton.style.height = "24px";
+  iconButton.title = "Copy";
+
+  const copyIconSVG = `
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon-md-heavy"><path fill-rule="evenodd" clip-rule="evenodd" d="M7 5C7 3.34315 8.34315 2 10 2H19C20.6569 2 22 3.34315 22 5V14C22 15.6569 20.6569 17 19 17H17V19C17 20.6569 15.6569 22 14 22H5C3.34315 22 2 20.6569 2 19V10C2 8.34315 3.34315 7 5 7H7V5ZM9 7H14C15.6569 7 17 8.34315 17 10V15H19C19.5523 15 20 14.5523 20 14V5C20 4.44772 19.5523 4 19 4H10C9.44772 4 9 4.44772 9 5V7ZM5 9C4.44772 9 4 9.44772 4 10V19C4 19.5523 4.44772 20 5 20H14C14.5523 20 15 19.5523 15 19V10C15 9.44772 14.5523 9 14 9H5Z" fill="currentColor"></path></svg>
+  `;
+  const checkIconSVG = `
+    <svg xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\" stroke-width=\"1.5\" stroke=\"currentColor\" class=\"size-6\" width=\"24\" height=\"24\">
+      <path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M4.5 12.75l6 6 9-13.5\" />
     </svg>
   `;
-  iconButton.addEventListener("click", onCopy);
+  iconButton.innerHTML = copyIconSVG;
+
+  let checkTimeout = null;
+  iconButton.addEventListener("click", () => {
+    if (checkTimeout) clearTimeout(checkTimeout);
+    iconButton.innerHTML = checkIconSVG;
+    checkTimeout = setTimeout(() => {
+      iconButton.innerHTML = copyIconSVG;
+    }, 2000);
+    onCopy();
+  });
+  
+  // Add hover effect for iconButton
+  container.addEventListener("mouseenter", () => {
+    container.style.background = "#2E2E2E";
+    container.style.borderRadius = "8px";
+  });
+  container.addEventListener("mouseleave", () => {
+    container.style.background = "none";
+    container.style.borderRadius = "0";
+  });
 
   // Chevron button
   const chevronButton = document.createElement("button");
@@ -83,13 +102,13 @@ function setDefaultTransformationIndex(idx) {
 function createMenuForDefault(parent, anchorButton, onSelect) {
   const menu = document.createElement("div");
   menu.style.position = "absolute";
-  menu.style.backgroundColor = "white";
-  menu.style.border = "1px solid #ccc";
-  menu.style.borderRadius = "4px";
+  menu.style.backgroundColor = "#2E2E2E";
+  // menu.style.border = "1px solid #ccc";
+  menu.style.borderRadius = "16px";
   menu.style.padding = "8px";
   menu.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)";
   menu.style.zIndex = "1000";
-  menu.style.color = "black";
+  menu.style.color = "white";
   menu.style.minWidth = "180px";
 
   const options = [
@@ -115,19 +134,21 @@ function createMenuForDefault(parent, anchorButton, onSelect) {
   options.forEach((option, idx) => {
     const optionElement = document.createElement("div");
     optionElement.innerText = option.text + (idx === currentIdx ? "  ✓" : "");
-    optionElement.style.padding = "4px 8px";
+    optionElement.style.padding = "8px 12px";
     optionElement.style.cursor = "pointer";
-    optionElement.style.background = idx === currentIdx ? "#f0f0f0" : "white";
+    optionElement.style.borderRadius = "8px";
+    optionElement.style.fontSize = "15px";
+    optionElement.style.background = idx === currentIdx ? "#484848" : "#2E2E2E";
     optionElement.addEventListener("click", () => {
       setDefaultTransformationIndex(idx);
       menu.remove();
       if (onSelect) onSelect(idx);
     });
     optionElement.addEventListener("mouseenter", () => {
-      optionElement.style.background = "#f0f0f0";
+      optionElement.style.background = "#484848";
     });
     optionElement.addEventListener("mouseleave", () => {
-      optionElement.style.background = idx === currentIdx ? "#f0f0f0" : "white";
+      optionElement.style.background = idx === currentIdx ? "#484848" : "#2E2E2E";
     });
     menu.appendChild(optionElement);
   });
@@ -264,6 +285,34 @@ function extractMarkdownText(markdownDiv, transformations = []) {
       }
     });
 
+    // Configure turndown to handle tables
+    turndownService.addRule('tables', {
+      filter: ['table'],
+      replacement: function(content, node) {
+        const table = node;
+        const rows = Array.from(table.querySelectorAll('tr'));
+        
+        // Get headers
+        const headers = Array.from(rows[0].querySelectorAll('th, td'))
+          .map(cell => cell.textContent.trim());
+        
+        // Create header row
+        let markdown = '| ' + headers.join(' | ') + ' |\n';
+        
+        // Create separator row
+        markdown += '| ' + headers.map(() => '---').join(' | ') + ' |\n';
+        
+        // Add data rows
+        for (let i = 1; i < rows.length; i++) {
+          const cells = Array.from(rows[i].querySelectorAll('td'))
+            .map(cell => cell.textContent.trim());
+          markdown += '| ' + cells.join(' | ') + ' |\n';
+        }
+        
+        return markdown;
+      }
+    });
+
     // Convert HTML to Markdown
     let markdown = turndownService.turndown(transformedDiv.innerHTML);
     
@@ -286,6 +335,9 @@ function copyToClipboard(text) {
 function addSuperCopyButton(copyButton) {
   if (isSuperCopyInjected(copyButton)) return;
   markAsInjected(copyButton);
+
+  // Hide the original copy button
+  // copyButton.style.display = "none";
 
   const options = [
     {
