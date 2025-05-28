@@ -13,18 +13,74 @@ function markAsInjected(button) {
   button.dataset.copyPlusInjected = "true";
 }
 
-// 🧱 Create the SuperCopy button
-function createSuperCopyButton(onClick) {
-  const button = document.createElement("button");
-  button.innerText = "SuperCopy";
-  button.setAttribute("aria-label", "Super Copy");
-  button.style.marginLeft = "8px";
-  button.addEventListener("click", onClick);
-  return button;
+// 🧱 Create the SuperCopy split button
+function createSuperCopySplitButton(onCopy, onMenu) {
+  const container = document.createElement("div");
+  container.style.display = "inline-flex";
+  container.style.alignItems = "center";
+  container.style.marginLeft = "8px";
+  container.style.position = "relative";
+
+  // Main icon button (refresh/sync SVG)
+  const iconButton = document.createElement("button");
+  iconButton.setAttribute("aria-label", "Super Copy");
+  iconButton.style.background = "none";
+  iconButton.style.border = "none";
+  iconButton.style.cursor = "pointer";
+  iconButton.style.display = "flex";
+  iconButton.style.alignItems = "center";
+  iconButton.style.padding = "4px";
+  iconButton.innerHTML = `
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10 2V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M10 16V18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M4.22 4.22L5.64 5.64" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M14.36 14.36L15.78 15.78" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M2 10H4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M16 10H18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M4.22 15.78L5.64 14.36" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M14.36 5.64L15.78 4.22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.5"/>
+    </svg>
+  `;
+  iconButton.addEventListener("click", onCopy);
+
+  // Chevron button
+  const chevronButton = document.createElement("button");
+  chevronButton.setAttribute("aria-label", "Super Copy Options");
+  chevronButton.style.background = "none";
+  chevronButton.style.border = "none";
+  chevronButton.style.cursor = "pointer";
+  chevronButton.style.display = "flex";
+  chevronButton.style.alignItems = "center";
+  chevronButton.style.padding = "4px";
+  chevronButton.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `;
+  chevronButton.addEventListener("click", (e) => {
+    e.stopPropagation();
+    onMenu(container, chevronButton);
+  });
+
+  container.appendChild(iconButton);
+  container.appendChild(chevronButton);
+  return container;
 }
 
-// 🍔 Create menu component
-function createMenu(copyButton, markdownDiv) {
+// 🏷️ Default transformation index (persisted in localStorage)
+const SUPER_COPY_DEFAULT_KEY = 'superCopyDefaultIndex';
+function getDefaultTransformationIndex() {
+  const idx = localStorage.getItem(SUPER_COPY_DEFAULT_KEY);
+  return idx !== null ? parseInt(idx, 10) : 0;
+}
+function setDefaultTransformationIndex(idx) {
+  localStorage.setItem(SUPER_COPY_DEFAULT_KEY, idx);
+}
+
+// 🍔 Create menu component for selecting default
+function createMenuForDefault(parent, anchorButton, onSelect) {
   const menu = document.createElement("div");
   menu.style.position = "absolute";
   menu.style.backgroundColor = "white";
@@ -34,6 +90,7 @@ function createMenu(copyButton, markdownDiv) {
   menu.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)";
   menu.style.zIndex = "1000";
   menu.style.color = "black";
+  menu.style.minWidth = "180px";
 
   const options = [
     {
@@ -53,36 +110,44 @@ function createMenu(copyButton, markdownDiv) {
       transformations: [removeMarkdownFormatting]
     }
   ];
+  const currentIdx = getDefaultTransformationIndex();
 
-  options.forEach(option => {
+  options.forEach((option, idx) => {
     const optionElement = document.createElement("div");
-    optionElement.innerText = option.text;
+    optionElement.innerText = option.text + (idx === currentIdx ? "  ✓" : "");
     optionElement.style.padding = "4px 8px";
     optionElement.style.cursor = "pointer";
-    optionElement.style.hover = "background-color: #f0f0f0";
+    optionElement.style.background = idx === currentIdx ? "#f0f0f0" : "white";
     optionElement.addEventListener("click", () => {
-      const markdownText = extractMarkdownText(markdownDiv, option.transformations);
-      copyToClipboard(markdownText)
-        .then(() => console.log(`Copied markdown content: ${option.text}`))
-        .catch((err) => console.error("Failed to copy:", err));
+      setDefaultTransformationIndex(idx);
       menu.remove();
+      if (onSelect) onSelect(idx);
+    });
+    optionElement.addEventListener("mouseenter", () => {
+      optionElement.style.background = "#f0f0f0";
+    });
+    optionElement.addEventListener("mouseleave", () => {
+      optionElement.style.background = idx === currentIdx ? "#f0f0f0" : "white";
     });
     menu.appendChild(optionElement);
   });
 
-  // Position the menu below the button
-  const buttonRect = copyButton.getBoundingClientRect();
-  menu.style.top = `${buttonRect.bottom + window.scrollY}px`;
-  menu.style.left = `${buttonRect.left + window.scrollX}px`;
+  // Position the menu below the anchor button
+  const rect = anchorButton.getBoundingClientRect();
+  menu.style.top = `${rect.bottom + window.scrollY}px`;
+  menu.style.left = `${rect.left + window.scrollX}px`;
 
   // Close menu when clicking outside
-  document.addEventListener("click", function closeMenu(e) {
-    if (!menu.contains(e.target) && e.target !== copyButton) {
-      menu.remove();
-      document.removeEventListener("click", closeMenu);
-    }
-  });
+  setTimeout(() => {
+    document.addEventListener("click", function closeMenu(e) {
+      if (!menu.contains(e.target) && e.target !== anchorButton) {
+        menu.remove();
+        document.removeEventListener("click", closeMenu);
+      }
+    });
+  }, 0);
 
+  document.body.appendChild(menu);
   return menu;
 }
 
@@ -217,22 +282,47 @@ function copyToClipboard(text) {
   return navigator.clipboard.writeText(text);
 }
 
-// ⚡ Add SuperCopy button next to Copy button
+// ⚡ Add SuperCopy split button next to Copy button
 function addSuperCopyButton(copyButton) {
   if (isSuperCopyInjected(copyButton)) return;
-
   markAsInjected(copyButton);
 
-  const superCopyButton = createSuperCopyButton(() => {
-    const markdownDiv = findMarkdownContainer(copyButton);
-    if (!markdownDiv) {
-      console.warn("Markdown container not found");
-      return;
+  const options = [
+    {
+      text: "Copy as is",
+      transformations: []
+    },
+    {
+      text: "Copy without framing text",
+      transformations: [removeFramingText]
+    },
+    {
+      text: "Copy without framing and HR tags",
+      transformations: [removeFramingText, removeAllHRs]
+    },
+    {
+      text: "Copy plain text (no markdown)",
+      transformations: [removeMarkdownFormatting]
     }
+  ];
 
-    const menu = createMenu(superCopyButton, markdownDiv);
-    document.body.appendChild(menu);
-  });
+  const superCopyButton = createSuperCopySplitButton(
+    () => {
+      const markdownDiv = findMarkdownContainer(copyButton);
+      if (!markdownDiv) {
+        console.warn("Markdown container not found");
+        return;
+      }
+      const idx = getDefaultTransformationIndex();
+      const markdownText = extractMarkdownText(markdownDiv, options[idx].transformations);
+      copyToClipboard(markdownText)
+        .then(() => console.log(`Copied markdown content: ${options[idx].text}`))
+        .catch((err) => console.error("Failed to copy:", err));
+    },
+    (container, anchorButton) => {
+      createMenuForDefault(container, anchorButton, () => {});
+    }
+  );
 
   copyButton.parentNode.insertBefore(superCopyButton, copyButton.nextSibling);
 }
