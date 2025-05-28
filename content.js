@@ -33,35 +33,42 @@ function createMenu(copyButton, markdownDiv) {
   menu.style.padding = "8px";
   menu.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)";
   menu.style.zIndex = "1000";
+  menu.style.color = "black";
 
-  const option1 = document.createElement("div");
-  option1.innerText = "Copy with framing text";
-  option1.style.padding = "4px 8px";
-  option1.style.cursor = "pointer";
-  option1.style.hover = "background-color: #f0f0f0";
-  option1.addEventListener("click", () => {
-    const markdownText = extractMarkdownText(markdownDiv, false);
-    copyToClipboard(markdownText)
-      .then(() => console.log("Copied markdown content with framing text"))
-      .catch((err) => console.error("Failed to copy:", err));
-    menu.remove();
+  const options = [
+    {
+      text: "Copy as is",
+      transformations: []
+    },
+    {
+      text: "Copy without framing text",
+      transformations: [removeFramingText]
+    },
+    {
+      text: "Copy without framing and HR tags",
+      transformations: [removeFramingText, removeAllHRs]
+    },
+    {
+      text: "Copy plain text (no markdown)",
+      transformations: [removeMarkdownFormatting]
+    }
+  ];
+
+  options.forEach(option => {
+    const optionElement = document.createElement("div");
+    optionElement.innerText = option.text;
+    optionElement.style.padding = "4px 8px";
+    optionElement.style.cursor = "pointer";
+    optionElement.style.hover = "background-color: #f0f0f0";
+    optionElement.addEventListener("click", () => {
+      const markdownText = extractMarkdownText(markdownDiv, option.transformations);
+      copyToClipboard(markdownText)
+        .then(() => console.log(`Copied markdown content: ${option.text}`))
+        .catch((err) => console.error("Failed to copy:", err));
+      menu.remove();
+    });
+    menu.appendChild(optionElement);
   });
-
-  const option2 = document.createElement("div");
-  option2.innerText = "Copy without framing text";
-  option2.style.padding = "4px 8px";
-  option2.style.cursor = "pointer";
-  option2.style.hover = "background-color: #f0f0f0";
-  option2.addEventListener("click", () => {
-    const markdownText = extractMarkdownText(markdownDiv, true);
-    copyToClipboard(markdownText)
-      .then(() => console.log("Copied markdown content without framing text"))
-      .catch((err) => console.error("Failed to copy:", err));
-    menu.remove();
-  });
-
-  menu.appendChild(option1);
-  menu.appendChild(option2);
 
   // Position the menu below the button
   const buttonRect = copyButton.getBoundingClientRect();
@@ -117,8 +124,35 @@ function removeFramingText(element) {
   return element;
 }
 
+// 🧹 Remove all HR tags from the element
+function removeAllHRs(element) {
+  const hrs = element.getElementsByTagName('hr');
+  while (hrs.length > 0) {
+    hrs[0].remove();
+  }
+  return element;
+}
+
+// 🧹 Remove all markdown formatting
+function removeMarkdownFormatting(element) {
+  // Remove all formatting elements while preserving text
+  const elementsToRemove = element.querySelectorAll('strong, em, code, pre, h1, h2, h3, h4, h5, h6, blockquote, ul, ol, li');
+  elementsToRemove.forEach(el => {
+    const textNode = document.createTextNode(el.textContent);
+    el.parentNode.replaceChild(textNode, el);
+  });
+  return element;
+}
+
+// 🧹 Apply transformations to the element
+function applyTransformations(element, transformations) {
+  const clonedElement = element.cloneNode(true);
+  transformations.forEach(transform => transform(clonedElement));
+  return clonedElement;
+}
+
 // 📄 Extract and clean markdown text from HTML using turndown
-function extractMarkdownText(markdownDiv, removeFraming = true) {
+function extractMarkdownText(markdownDiv, transformations = []) {
   if (!markdownDiv) {
     console.error('Markdown div is undefined');
     return '';
@@ -134,10 +168,10 @@ function extractMarkdownText(markdownDiv, removeFraming = true) {
     const clonedDiv = markdownDiv.cloneNode(true);
     console.log(clonedDiv);
 
-    // Clean up the content if removeFraming is true
-    if (removeFraming) {
-      removeFramingText(clonedDiv);
-    }
+    // Apply transformations if any
+    const transformedDiv = transformations.length > 0 
+      ? applyTransformations(clonedDiv, transformations)
+      : clonedDiv;
 
     const turndownService = new TurndownService({
       headingStyle: 'atx',
@@ -166,7 +200,7 @@ function extractMarkdownText(markdownDiv, removeFraming = true) {
     });
 
     // Convert HTML to Markdown
-    let markdown = turndownService.turndown(clonedDiv.innerHTML);
+    let markdown = turndownService.turndown(transformedDiv.innerHTML);
     
     // Clean up any extra newlines
     markdown = markdown.replace(/\n{3,}/g, '\n\n').trim();
