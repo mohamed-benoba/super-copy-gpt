@@ -25,3 +25,11 @@ Simply visit any ChatGPT conversation page, and you'll see duplicate copy button
 You'll need to add icon files (icon48.png and icon128.png) to the extension directory for the extension to show up properly in Chrome. You can create these icons yourself or use any appropriate icons. 
 
 arc://extensions/
+
+
+# Features:
+- Removes framing text (intor & outro) with their framing lines
+- Soon: remove spaces between bullet points
+- Soon: remove all lines
+- Soon: remove all markdown
+- Soon: mark way as default

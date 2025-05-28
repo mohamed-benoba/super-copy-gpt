@@ -8,7 +8,7 @@
     {
       "matches": [
         "https://chat.openai.com/c/*",
-        "https://chatgpt.com/c/*"
+        "https://chatgpt.com/*"
       ],
       "js": ["turndown.min.js", "content.js"]
     }
